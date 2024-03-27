@@ -1,3 +1,5 @@
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 import requests
 import json
 import re
@@ -21,7 +23,6 @@ def authors_page(url, page):
         authors.append(author)
 
 
-
 def qoutes_page(page):
     response = requests.get(page)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -31,8 +32,6 @@ def qoutes_page(page):
         qoute["author"] = q.select('span')[1].find('small', attrs= {"class":"author"}).text
         qoute["quote"] = q.find('span', attrs = {"class":"text"}).text
         qoutes.append(qoute)
-
-
 
 
 def next_page(url):
@@ -54,11 +53,25 @@ if __name__ == "__main__":
     for page in next_page(url):
         qoutes_page(page)
         authors_page(url, page)
+
+
     with open('authors.json', 'w', encoding='utf-8') as f:
         json.dump(authors, f, ensure_ascii=False, indent=4)  
     with open('qoutes.json', 'w', encoding='utf-8') as f:
         json.dump(qoutes, f, ensure_ascii=False, indent=4)  
+
         
+    uri = "mongodb+srv://serbakmarana671:RjVz1wRKmAfcMz20@cluster0.xydhvoa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
+    # Create a new client and connect to the server
+    client = MongoClient(uri, server_api=ServerApi('1'))
+    db = client.ds_dz03 
+    with open('authors.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        db.authors.insert_many(data)
+    with open('qoutes.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        db.qoutes.insert_many(data)
 
 
 
